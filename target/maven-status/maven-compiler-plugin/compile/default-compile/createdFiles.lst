@@ -1,0 +1,11 @@
+com/tennisscoring/domain/event/PointScoredEvent.class
+com/tennisscoring/ports/secondary/EventPublisherPort.class
+com/tennisscoring/domain/event/MatchCompletedEvent.class
+com/tennisscoring/ports/secondary/MatchRepositoryPort.class
+com/tennisscoring/domain/model/MatchStatus.class
+com/tennisscoring/domain/exception/MatchNotFoundException.class
+com/tennisscoring/ports/primary/QueryPort.class
+com/tennisscoring/domain/exception/InvalidMatchStateException.class
+com/tennisscoring/domain/event/MatchCreatedEvent.class
+com/tennisscoring/domain/model/Match.class
+com/tennisscoring/ports/primary/MatchManagementPort.class
