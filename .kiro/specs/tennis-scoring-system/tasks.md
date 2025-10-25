@@ -64,79 +64,79 @@
   - 實作 DomainEvent 基底類別和具體事件類別
   - _需求: 1.4, 6.3_
 
-- [-] 3. 實作領域服務
+- [x] 3. 實作領域服務
   - 建立 MatchDomainService 實作業務邏輯
   - 建立 ScoringDomainService 處理複雜計分規則
   - 實作輸入驗證和錯誤處理
   - _需求: 2.1, 2.2, 3.1, 4.4, 5.3, 9.1, 9.2_
 
-- [ ] 3.1 實作 ScoringDomainService
+- [x] 3.1 實作 ScoringDomainService
   - 實作網球計分邏輯包含平分和優勢處理
   - 實作搶七局計分邏輯
   - 加入計分狀態驗證
   - _需求: 2.1, 2.3, 3.1, 3.2, 3.3, 5.1, 5.2, 5.3_
 
-- [ ] 3.2 實作 MatchDomainService
+- [x] 3.2 實作 MatchDomainService
   - 實作 MatchManagementPort 和 QueryPort 介面
   - 整合 ScoringDomainService 處理得分邏輯
   - 實作比賽狀態管理和事件發布
   - _需求: 1.1, 2.2, 4.4, 6.1, 6.2, 6.3_
 
-- [ ] 3.3 實作輸入驗證和錯誤處理
+- [x] 3.3 實作輸入驗證和錯誤處理
   - 建立自定義異常類別
   - 實作業務規則驗證邏輯
   - _需求: 9.1, 9.2, 9.5_
 
-- [ ] 4. 實作 Secondary Adapters
+- [x] 4. 實作 Secondary Adapters
   - 建立 InMemoryMatchRepository 實作資料儲存
   - 建立 NoOpEventPublisher 實作事件發布
   - 確保執行緒安全和資料一致性
   - _需求: 1.3, 6.3, 9.4_
 
-- [ ] 4.1 實作 InMemoryMatchRepository
+- [x] 4.1 實作 InMemoryMatchRepository
   - 使用 ConcurrentHashMap 實作執行緒安全的記憶體儲存
   - 實作所有 MatchRepositoryPort 方法
   - _需求: 1.3, 9.4_
 
-- [ ] 4.2 實作 NoOpEventPublisher
+- [x] 4.2 實作 NoOpEventPublisher
   - 建立簡單的日誌記錄事件發布器
   - 實作所有 EventPublisherPort 方法
   - _需求: 6.3_
 
-- [ ] 5. 建立 BDD 測試情境
+- [x] 5. 建立 BDD 測試情境
   - 撰寫 Gherkin 功能檔案描述所有主要業務情境
   - 實作 Cucumber 步驟定義
   - 建立測試資料和輔助方法
   - _需求: 11.1, 11.2, 11.3, 11.4_
 
-- [ ] 5.1 撰寫比賽管理 BDD 情境
+- [x] 5.1 撰寫比賽管理 BDD 情境
   - 建立 match-creation.feature 描述比賽創建情境
   - 建立 match-deletion.feature 描述比賽刪除情境
   - _需求: 1.1, 1.2, 1.3, 11.1, 11.2_
 
-- [ ] 5.2 撰寫計分邏輯 BDD 情境
+- [x] 5.2 撰寫計分邏輯 BDD 情境
   - 建立 scoring.feature 描述基本計分情境
   - 建立 deuce-advantage.feature 描述平分和優勢情境
   - 建立 tiebreak.feature 描述搶七局情境
   - _需求: 2.1, 2.3, 3.1, 3.2, 5.1, 5.2, 11.1, 11.2_
 
-- [ ] 5.3 撰寫比賽進度 BDD 情境
+- [x] 5.3 撰寫比賽進度 BDD 情境
   - 建立 set-game-progression.feature 描述局數和盤數進度
   - 建立 match-completion.feature 描述比賽結束情境
   - _需求: 4.1, 4.2, 4.3, 6.1, 6.2, 11.1, 11.2_
 
-- [ ] 5.4 實作 Cucumber 步驟定義
+- [x] 5.4 實作 Cucumber 步驟定義
   - 建立步驟定義類別實作 Given-When-Then 步驟
   - 建立測試資料建構器和輔助方法
   - _需求: 11.3, 11.4_
 
-- [ ] 6. 實作 Primary Adapters
+- [-] 6. 實作 Primary Adapters
   - 建立 MatchController REST API 控制器
   - 實作請求/回應模型和資料轉換
   - 建立全域異常處理器
   - _需求: 7.1, 7.2, 7.4, 8.1, 8.2, 8.4, 9.1, 9.2_
 
-- [ ] 6.1 建立 API 請求/回應模型
+- [x] 6.1 建立 API 請求/回應模型
   - 實作 CreateMatchRequest, ScorePointRequest 等請求模型
   - 實作 MatchResponse, ErrorResponse 等回應模型
   - 加入 Bean Validation 註解
