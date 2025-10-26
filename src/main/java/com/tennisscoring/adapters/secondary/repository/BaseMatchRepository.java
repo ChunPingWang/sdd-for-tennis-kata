@@ -29,7 +29,9 @@ public abstract class BaseMatchRepository implements MatchRepositoryPort {
      */
     @Override
     public final Match save(Match match) {
-        Objects.requireNonNull(match, "Match cannot be null");
+        if (match == null) {
+            throw new IllegalArgumentException("Match cannot be null");
+        }
         validateMatch(match);
         
         return doSave(match);
@@ -85,7 +87,9 @@ public abstract class BaseMatchRepository implements MatchRepositoryPort {
      */
     @Override
     public final List<Match> findByStatus(MatchStatus status) {
-        Objects.requireNonNull(status, "Match status cannot be null");
+        if (status == null) {
+            throw new IllegalArgumentException("Match status cannot be null");
+        }
         
         return doFindByStatus(status);
     }

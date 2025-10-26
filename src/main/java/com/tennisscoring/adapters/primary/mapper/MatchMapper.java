@@ -31,7 +31,7 @@ public class MatchMapper {
         response.setMatchId(match.getMatchId());
         response.setPlayer1(toPlayerResponse(match.getPlayer1()));
         response.setPlayer2(toPlayerResponse(match.getPlayer2()));
-        response.setStatus(match.getStatus().getDisplayName());
+        response.setStatus(match.getStatus().name());
         response.setCurrentScore(match.getCurrentScore());
         response.setCurrentSetNumber(match.getCurrentSetNumber());
         response.setCurrentGameNumber(match.getCurrentGameNumber());

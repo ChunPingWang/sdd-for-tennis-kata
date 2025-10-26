@@ -42,24 +42,318 @@
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 🎯 SOLID 原則實作
+### 🎯 SOLID 原則架構設計
 
-本系統嚴格遵循 SOLID 原則，確保程式碼的可維護性、可擴展性和可測試性：
+本系統嚴格遵循 SOLID 原則，確保程式碼的可維護性、可擴展性和可測試性。以下是詳細的架構設計原理與實作方式：
 
-| 原則 | 實作方式 | 驗證狀態 |
-|------|----------|----------|
-| **S**RP | 每個服務類別只負責單一職責 | ✅ 通過 |
-| **O**CP | 工廠模式支援擴展，策略模式處理變化 | ✅ 通過 |
-| **L**SP | 所有實作都可完全替換其抽象 | ✅ 通過 |
-| **I**SP | 介面專注且精簡，客戶端只依賴需要的功能 | ✅ 通過 |
-| **D**IP | 高層模組依賴抽象，使用依賴注入 | ✅ 通過 |
+#### 📋 SOLID 原則概覽
 
-**SOLID 原則驗證**：執行 `mvn test -Dtest=SolidPrinciplesTest` 來驗證合規性
+| 原則 | 核心理念 | 實作方式 | 架構優勢 | 驗證狀態 |
+|------|----------|----------|----------|----------|
+| **S**RP<br/>單一職責 | 一個類別只有一個改變的理由 | 服務分離、職責專一 | 高內聚、易維護 | ✅ 通過 |
+| **O**CP<br/>開放封閉 | 對擴展開放，對修改封閉 | 工廠模式、策略模式 | 易擴展、穩定性高 | ✅ 通過 |
+| **L**SP<br/>里氏替換 | 子類別可完全替換父類別 | 契約設計、行為一致 | 可替換、可靠性高 | ✅ 通過 |
+| **I**SP<br/>介面隔離 | 客戶端不依賴未使用的介面 | 介面分離、專用設計 | 低耦合、靈活性高 | ✅ 通過 |
+| **D**IP<br/>依賴反轉 | 依賴抽象而非具體實作 | 依賴注入、抽象設計 | 可測試、可配置 | ✅ 通過 |
+
+#### 🏗️ 架構設計原理
+
+##### 1. 單一職責原則 (SRP) - 服務分離設計
+
+```java
+// ✅ 職責分離 - 每個服務專注單一職責
+@Service
+public class MatchDomainService implements MatchService {
+    // 專注於：比賽生命週期管理
+    public Match createMatch(String player1, String player2) { ... }
+    public Match scorePoint(String matchId, String playerId) { ... }
+    public void deleteMatch(String matchId) { ... }
+}
+
+@Service  
+public class MatchStatisticsService implements StatisticsService {
+    // 專注於：統計計算與分析
+    public MatchStatistics getMatchStatistics(String matchId) { ... }
+    public SystemStatistics getSystemStatistics() { ... }
+}
+
+@Service
+public class MatchEventService implements EventService {
+    // 專注於：事件發布與通知
+    public void publishMatchCreated(MatchCreatedEvent event) { ... }
+    public void publishPointScored(PointScoredEvent event) { ... }
+}
+```
+
+**設計優勢**：
+- 🎯 **高內聚性**：相關功能集中在同一服務
+- 🔧 **易於維護**：修改統計邏輯不影響比賽管理
+- 🧪 **易於測試**：每個服務可獨立測試
+- 👥 **團隊協作**：不同開發者可並行開發不同服務
+
+##### 2. 開放封閉原則 (OCP) - 擴展性設計
+
+```java
+// ✅ 工廠模式 - 支援新比賽類型擴展
+public interface MatchFactory {
+    Match createMatch(String player1Name, String player2Name);
+    boolean supports(String matchType);
+}
+
+// 標準比賽工廠
+public class StandardMatchFactory implements MatchFactory {
+    public boolean supports(String matchType) {
+        return "STANDARD".equals(matchType);
+    }
+}
+
+// 五盤三勝比賽工廠 - 新增功能無需修改現有程式碼
+public class BestOfFiveMatchFactory implements MatchFactory {
+    public boolean supports(String matchType) {
+        return "BEST_OF_5".equals(matchType);
+    }
+}
+
+// 工廠註冊表 - 動態擴展支援
+@Component
+public class MatchFactoryRegistry {
+    public Match createMatch(String matchType, String player1, String player2) {
+        return factories.stream()
+            .filter(factory -> factory.supports(matchType))
+            .findFirst()
+            .orElseThrow(() -> new UnsupportedMatchTypeException(matchType))
+            .createMatch(player1, player2);
+    }
+}
+```
+
+**設計優勢**：
+- 🚀 **無縫擴展**：新增比賽類型不修改現有程式碼
+- 🛡️ **穩定性高**：現有功能不受新功能影響
+- 🔄 **版本相容**：向後相容性保證
+- ⚡ **快速開發**：新功能開發週期短
+
+##### 3. 里氏替換原則 (LSP) - 契約一致性設計
+
+```java
+// ✅ 基底契約定義
+public abstract class BaseMatchRepository implements MatchRepositoryPort {
+    
+    // 模板方法確保行為一致性
+    @Override
+    public final Match save(Match match) {
+        validateMatch(match);
+        return doSave(match);
+    }
+    
+    // 子類別實作具體邏輯
+    protected abstract Match doSave(Match match);
+    
+    // 契約方法 - 確保可替換性
+    public abstract String getRepositoryType();
+    public abstract boolean isThreadSafe();
+}
+
+// 記憶體實作 - 完全遵循契約
+public class InMemoryMatchRepository extends BaseMatchRepository {
+    @Override
+    public String getRepositoryType() { return "IN_MEMORY"; }
+    
+    @Override
+    public boolean isThreadSafe() { return true; }
+    
+    @Override
+    protected Match doSave(Match match) {
+        matches.put(match.getMatchId(), match);
+        return match;
+    }
+}
+
+// 資料庫實作 - 完全遵循契約
+public class DatabaseMatchRepository extends BaseMatchRepository {
+    @Override
+    public String getRepositoryType() { return "DATABASE"; }
+    
+    @Override
+    public boolean isThreadSafe() { return true; }
+    
+    @Override
+    protected Match doSave(Match match) {
+        return entityManager.merge(match);
+    }
+}
+```
+
+**設計優勢**：
+- 🔄 **完全可替換**：任何實作都可無縫替換
+- 🧪 **測試一致性**：所有實作通過相同測試
+- 📋 **契約保證**：行為預期明確且一致
+- 🛠️ **部署靈活性**：可根據環境選擇不同實作
+
+##### 4. 介面隔離原則 (ISP) - 專用介面設計
+
+```java
+// ✅ 介面分離 - 客戶端只依賴需要的功能
+public interface MatchCreationPort {
+    Match createMatch(String player1Name, String player2Name);
+    Match createMatch(String matchType, String player1Name, String player2Name);
+}
+
+public interface MatchScoringPort {
+    Match scorePoint(String matchId, String playerId);
+}
+
+public interface MatchQueryPort {
+    Match getMatch(String matchId);
+    List<Match> getAllMatches();
+    List<Match> getMatchesByStatus(MatchStatus status);
+    boolean matchExists(String matchId);
+}
+
+public interface MatchDeletionPort {
+    void deleteMatch(String matchId);
+    Match cancelMatch(String matchId);
+}
+
+// 控制器只依賴需要的介面
+@RestController
+public class MatchController {
+    private final MatchCreationPort matchCreation;
+    private final MatchScoringPort matchScoring;
+    private final MatchQueryPort matchQuery;
+    
+    // 精確的依賴注入
+    public MatchController(
+        MatchCreationPort matchCreation,
+        MatchScoringPort matchScoring, 
+        MatchQueryPort matchQuery) {
+        this.matchCreation = matchCreation;
+        this.matchScoring = matchScoring;
+        this.matchQuery = matchQuery;
+    }
+}
+```
+
+**設計優勢**：
+- 🎯 **精確依賴**：只依賴實際使用的功能
+- 🔒 **安全性高**：限制客戶端存取不需要的功能
+- 🧪 **易於測試**：Mock 範圍小且精確
+- 📦 **模組化高**：介面職責清晰且獨立
+
+##### 5. 依賴反轉原則 (DIP) - 抽象依賴設計
+
+```java
+// ✅ 抽象介面定義
+public interface MatchService {
+    Match createMatch(String player1Name, String player2Name);
+    Match scorePoint(String matchId, String playerId);
+}
+
+public interface MatchRepositoryPort {
+    Match save(Match match);
+    Optional<Match> findById(String matchId);
+}
+
+// 高層模組依賴抽象
+@Service
+public class MatchDomainService implements MatchService {
+    private final MatchRepositoryPort matchRepository; // 依賴抽象
+    private final ScoringService scoringService;       // 依賴抽象
+    private final EventService eventService;           // 依賴抽象
+    
+    // 建構子注入確保依賴明確
+    public MatchDomainService(
+        MatchRepositoryPort matchRepository,
+        ScoringService scoringService,
+        EventService eventService) {
+        this.matchRepository = matchRepository;
+        this.scoringService = scoringService;
+        this.eventService = eventService;
+    }
+    
+    @Override
+    public Match createMatch(String player1Name, String player2Name) {
+        Match match = Match.create(player1Name, player2Name);
+        Match savedMatch = matchRepository.save(match); // 使用抽象
+        eventService.publishMatchCreated(savedMatch);   // 使用抽象
+        return savedMatch;
+    }
+}
+
+// 配置類別管理依賴關係
+@Configuration
+public class ServiceConfiguration {
+    
+    @Bean
+    public MatchService matchService(
+        MatchRepositoryPort matchRepository,
+        ScoringService scoringService,
+        EventService eventService) {
+        return new MatchDomainService(matchRepository, scoringService, eventService);
+    }
+}
+```
+
+**設計優勢**：
+- 🧪 **高可測試性**：依賴可輕鬆 Mock 和替換
+- ⚙️ **配置靈活性**：可透過配置改變實作
+- 🔄 **低耦合性**：高層邏輯不依賴技術細節
+- 🛠️ **易於維護**：技術實作變更不影響業務邏輯
+
+#### 🎯 架構優勢總結
+
+##### 可維護性優勢
+- **職責清晰**：每個組件職責明確，修改範圍可控
+- **依賴明確**：依賴關係清楚，影響範圍可預測
+- **測試完整**：每個組件都有對應的單元測試
+
+##### 可擴展性優勢
+- **工廠擴展**：新比賽類型可無縫添加
+- **策略擴展**：新計分規則可輕鬆實作
+- **介面擴展**：新功能可透過新介面添加
+
+##### 可測試性優勢
+- **Mock 友好**：所有依賴都可輕鬆 Mock
+- **隔離測試**：每個組件可獨立測試
+- **契約測試**：介面契約確保實作正確性
+
+##### 團隊協作優勢
+- **並行開發**：不同團隊成員可同時開發不同組件
+- **程式碼審查**：清晰的架構便於程式碼審查
+- **知識分享**：標準化的設計模式易於理解和傳承
+
+#### 🔍 SOLID 原則驗證
+
+**自動化測試驗證**：
+```bash
+# 執行 SOLID 原則合規性測試
+mvn test -Dtest=SolidPrinciplesTest
+
+# 預期結果：6/6 測試通過
+# ✅ Single Responsibility Principle (SRP) - 職責分離驗證
+# ✅ Open-Closed Principle (OCP) - 擴展性驗證  
+# ✅ Liskov Substitution Principle (LSP) - 替換性驗證
+# ✅ Interface Segregation Principle (ISP) - 介面隔離驗證
+# ✅ Dependency Inversion Principle (DIP) - 依賴反轉驗證
+# ✅ SOLID Principles Integration - 整體整合驗證
+```
+
+**手動審查檢查**：
+- 使用 [程式碼審查檢查清單](CODE_REVIEW_CHECKLIST.md) 進行人工驗證
+- 定期進行架構審查和重構評估
+- 持續監控程式碼品質指標
+
+#### 📚 深入學習資源
 
 **相關文件**：
-- [SOLID 原則合規性報告](SOLID_PRINCIPLES_COMPLIANCE.md)
-- [SOLID 原則開發者指南](SOLID_PRINCIPLES_GUIDE.md)
-- [程式碼審查檢查清單](CODE_REVIEW_CHECKLIST.md)
+- [SOLID 原則合規性報告](SOLID_PRINCIPLES_COMPLIANCE.md) - 詳細的合規性分析和驗證結果
+- [SOLID 原則開發者指南](SOLID_PRINCIPLES_GUIDE.md) - 實作指南和最佳實務
+- [程式碼審查檢查清單](CODE_REVIEW_CHECKLIST.md) - 程式碼審查時的 SOLID 原則檢查項目
+
+**實作範例**：
+- 查看 `src/main/java/com/tennisscoring/domain/service/` 中的服務實作
+- 參考 `src/main/java/com/tennisscoring/adapters/` 中的 Port/Adapter 模式
+- 學習 `src/test/java/com/tennisscoring/solid/` 中的 SOLID 原則測試
 
 ## 🚀 快速開始
 

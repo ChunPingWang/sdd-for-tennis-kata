@@ -37,15 +37,15 @@ public class DomainServiceConfiguration {
     @Primary
     public MatchService matchService(
             MatchRepositoryPort matchRepository,
-            ScoringService scoringService,
-            EventService eventService,
+            ScoringDomainService scoringService,
+            MatchEventService eventService,
             MatchFactoryRegistry matchFactory,
             ValidationService validationService) {
         
         return new MatchDomainService(
             matchRepository,
-            (ScoringDomainService) scoringService,
-            (MatchEventService) eventService,
+            scoringService,
+            eventService,
             matchFactory,
             validationService
         );
@@ -61,7 +61,7 @@ public class DomainServiceConfiguration {
      */
     @Bean
     @Primary
-    public ScoringService scoringService(ValidationService validationService) {
+    public ScoringDomainService scoringService(ValidationService validationService) {
         return new ScoringDomainService(validationService);
     }
     
@@ -78,12 +78,12 @@ public class DomainServiceConfiguration {
     @Primary
     public StatisticsService statisticsService(
             MatchRepositoryPort matchRepository,
-            ScoringService scoringService,
+            ScoringDomainService scoringService,
             ValidationService validationService) {
         
         return new MatchStatisticsService(
             matchRepository,
-            (ScoringDomainService) scoringService,
+            scoringService,
             validationService
         );
     }
@@ -98,7 +98,7 @@ public class DomainServiceConfiguration {
      */
     @Bean
     @Primary
-    public EventService eventService(
+    public MatchEventService eventService(
             MatchEventPublisherPort matchEventPublisher,
             GameEventPublisherPort gameEventPublisher) {
         

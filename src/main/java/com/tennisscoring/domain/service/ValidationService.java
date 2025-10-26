@@ -54,23 +54,23 @@ public class ValidationService {
      */
     public void validatePlayerName(String playerName, String fieldName) {
         if (playerName == null) {
-            throw new ValidationException(fieldName, null, "Player name cannot be null");
+            throw new ValidationException(fieldName, null, "球員名稱不能為空");
         }
         
         String trimmedName = playerName.trim();
         
         if (trimmedName.isEmpty()) {
-            throw new ValidationException(fieldName, playerName, "Player name cannot be empty");
+            throw new ValidationException(fieldName, playerName, "球員名稱不能為空");
         }
         
         if (trimmedName.length() < MIN_PLAYER_NAME_LENGTH) {
             throw new ValidationException(fieldName, playerName, 
-                "Player name must be at least " + MIN_PLAYER_NAME_LENGTH + " character long");
+                "球員名稱長度至少需要 " + MIN_PLAYER_NAME_LENGTH + " 個字元");
         }
         
         if (trimmedName.length() > MAX_PLAYER_NAME_LENGTH) {
             throw new ValidationException(fieldName, playerName, 
-                "Player name cannot exceed " + MAX_PLAYER_NAME_LENGTH + " characters");
+                "球員名稱長度不能超過" + MAX_PLAYER_NAME_LENGTH + "個字元");
         }
         
         if (!VALID_PLAYER_NAME_PATTERN.matcher(trimmedName).matches()) {

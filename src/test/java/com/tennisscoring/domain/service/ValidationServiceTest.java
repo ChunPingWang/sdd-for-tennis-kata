@@ -67,7 +67,7 @@ class ValidationServiceTest {
         // When & Then
         assertThatThrownBy(() -> validationService.validatePlayerName(null, "playerName"))
             .isInstanceOf(ValidationException.class)
-            .hasMessageContaining("Player name cannot be null");
+            .hasMessageContaining("球員名稱不能為空");
     }
 
     @Test
@@ -79,7 +79,7 @@ class ValidationServiceTest {
         // When & Then
         assertThatThrownBy(() -> validationService.validatePlayerName(longName, "playerName"))
             .isInstanceOf(ValidationException.class)
-            .hasMessageContaining("cannot exceed 50 characters");
+            .hasMessageContaining("不能超過50個字元");
     }
 
     @Test

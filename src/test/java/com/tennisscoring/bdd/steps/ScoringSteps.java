@@ -38,8 +38,19 @@ public class ScoringSteps {
         lastException = null;
     }
     
+    /**
+     * Helper method to ensure currentMatch is available.
+     * 輔助方法確保 currentMatch 可用
+     */
+    private void ensureCurrentMatch() {
+        if (currentMatch == null) {
+            currentMatch = testDataBuilder.getLastCreatedMatch();
+        }
+    }
+    
     @而且("比賽已經開始")
     public void 比賽已經開始() {
+        ensureCurrentMatch();
         assertNotNull(currentMatch, "比賽應該存在");
         assertTrue(currentMatch.isInProgress(), "比賽應該正在進行中");
     }
@@ -47,6 +58,7 @@ public class ScoringSteps {
     @當("{string} 得到 {int} 分")
     public void 球員得到分(String playerName, int points) {
         try {
+            ensureCurrentMatch();
             assertNotNull(currentMatch, "比賽應該存在");
             PlayerId playerId = testDataBuilder.getPlayerIdFromMatch(currentMatch, playerName);
             assertNotNull(playerId, "球員 " + playerName + " 應該存在於比賽中");
@@ -63,6 +75,7 @@ public class ScoringSteps {
     
     @那麼("{string} 的分數應該是 {string}")
     public void 球員的分數應該是(String playerName, String expectedScore) {
+        ensureCurrentMatch();
         assertNotNull(currentMatch, "比賽應該存在");
         Player player = testDataBuilder.getPlayerFromMatch(currentMatch, playerName);
         assertNotNull(player, "球員 " + playerName + " 應該存在");
@@ -81,6 +94,7 @@ public class ScoringSteps {
     
     @那麼("{string} 應該贏得這一局")
     public void 球員應該贏得這一局(String playerName) {
+        ensureCurrentMatch();
         assertNotNull(currentMatch, "比賽應該存在");
         Player player = testDataBuilder.getPlayerFromMatch(currentMatch, playerName);
         assertNotNull(player, "球員 " + playerName + " 應該存在");
@@ -92,6 +106,7 @@ public class ScoringSteps {
     
     @而且("{string} 的局數應該是 {int}")
     public void 球員的局數應該是(String playerName, int expectedGames) {
+        ensureCurrentMatch();
         assertNotNull(currentMatch, "比賽應該存在");
         Player player = testDataBuilder.getPlayerFromMatch(currentMatch, playerName);
         assertNotNull(player, "球員 " + playerName + " 應該存在");
@@ -102,6 +117,7 @@ public class ScoringSteps {
     
     @而且("新的一局應該開始")
     public void 新的一局應該開始() {
+        ensureCurrentMatch();
         assertNotNull(currentMatch, "比賽應該存在");
         Game currentGame = currentMatch.getCurrentGame();
         assertNotNull(currentGame, "應該有新的一局");
@@ -119,6 +135,7 @@ public class ScoringSteps {
     
     @而且("兩位球員的分數都重置為 {string}")
     public void 兩位球員的分數都重置為(String expectedScore) {
+        ensureCurrentMatch();
         assertNotNull(currentMatch, "比賽應該存在");
         Game currentGame = currentMatch.getCurrentGame();
         assertNotNull(currentGame, "目前局應該存在");
@@ -140,6 +157,7 @@ public class ScoringSteps {
     @當("我嘗試為不存在的球員 {string} 記錄得分")
     public void 我嘗試為不存在的球員記錄得分(String playerName) {
         try {
+            ensureCurrentMatch();
             assertNotNull(currentMatch, "比賽應該存在");
             // Use a fake player ID that doesn't exist in the match
             matchDomainService.scorePoint(currentMatch.getMatchId(), "fake-player-id");
@@ -172,6 +190,7 @@ public class ScoringSteps {
     
     @假設("比賽已經完成，獲勝者是 {string}")
     public void 比賽已經完成獲勝者是(String winnerName) {
+        ensureCurrentMatch();
         assertNotNull(currentMatch, "比賽應該存在");
         // Simulate match completion by making one player win 2 sets
         // 通過讓一位球員贏得2盤來模擬比賽完成
@@ -187,6 +206,7 @@ public class ScoringSteps {
     @當("我嘗試為 {string} 記錄得分")
     public void 我嘗試為球員記錄得分(String playerName) {
         try {
+            ensureCurrentMatch();
             assertNotNull(currentMatch, "比賽應該存在");
             PlayerId playerId = testDataBuilder.getPlayerIdFromMatch(currentMatch, playerName);
             assertNotNull(playerId, "球員應該存在");
@@ -199,6 +219,7 @@ public class ScoringSteps {
     
     @當("{string} 贏得第 {int} 局")
     public void 球員贏得第局(String playerName, int gameNumber) {
+        ensureCurrentMatch();
         assertNotNull(currentMatch, "比賽應該存在");
         PlayerId playerId = testDataBuilder.getPlayerIdFromMatch(currentMatch, playerName);
         assertNotNull(playerId, "球員應該存在");
@@ -213,6 +234,7 @@ public class ScoringSteps {
     
     @而且("目前仍在第 {int} 盤")
     public void 目前仍在第盤(int expectedSetNumber) {
+        ensureCurrentMatch();
         assertNotNull(currentMatch, "比賽應該存在");
         assertEquals(expectedSetNumber, currentMatch.getCurrentSetNumber(), 
                     "目前應該在第 " + expectedSetNumber + " 盤");
@@ -220,6 +242,7 @@ public class ScoringSteps {
     
     @假設("{string} 贏得 {int} 局")
     public void 假設球員贏得局(String playerName, int gameCount) {
+        ensureCurrentMatch();
         assertNotNull(currentMatch, "比賽應該存在");
         PlayerId playerId = testDataBuilder.getPlayerIdFromMatch(currentMatch, playerName);
         assertNotNull(playerId, "球員應該存在");
@@ -240,6 +263,7 @@ public class ScoringSteps {
     
     @而且("比賽應該繼續進行")
     public void 比賽應該繼續進行() {
+        ensureCurrentMatch();
         assertNotNull(currentMatch, "比賽應該存在");
         assertTrue(currentMatch.isInProgress(), "比賽應該繼續進行");
         assertFalse(currentMatch.isCompleted(), "比賽不應該完成");

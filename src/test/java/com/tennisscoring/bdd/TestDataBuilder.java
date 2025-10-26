@@ -17,6 +17,7 @@ public class TestDataBuilder {
     
     private final Map<String, Match> matches = new HashMap<>();
     private final Map<String, String> matchIds = new HashMap<>();
+    private Match lastCreatedMatch;
     
     /**
      * Create a new match with the given player names.
@@ -31,6 +32,7 @@ public class TestDataBuilder {
         String key = player1Name + " vs " + player2Name;
         matches.put(key, match);
         matchIds.put(key, match.getMatchId());
+        lastCreatedMatch = match;
         return match;
     }
     
@@ -70,6 +72,7 @@ public class TestDataBuilder {
     public void storeMatch(String key, Match match) {
         matches.put(key, match);
         matchIds.put(key, match.getMatchId());
+        lastCreatedMatch = match;
     }
     
     /**
@@ -131,6 +134,7 @@ public class TestDataBuilder {
     public void clear() {
         matches.clear();
         matchIds.clear();
+        lastCreatedMatch = null;
     }
     
     /**
@@ -141,5 +145,15 @@ public class TestDataBuilder {
      */
     public int getMatchCount() {
         return matches.size();
+    }
+    
+    /**
+     * Get the last created match.
+     * 取得最後創建的比賽
+     * 
+     * @return the last created match or null if none
+     */
+    public Match getLastCreatedMatch() {
+        return lastCreatedMatch;
     }
 }

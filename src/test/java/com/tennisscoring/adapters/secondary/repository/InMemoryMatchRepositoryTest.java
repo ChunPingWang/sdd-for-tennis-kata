@@ -332,18 +332,30 @@ class InMemoryMatchRepositoryTest {
     @DisplayName("Should handle null match ID gracefully")
     void shouldHandleNullMatchIdGracefully() {
         // When & Then
-        assertThat(repository.findById(null)).isEmpty();
-        assertThat(repository.existsById(null)).isFalse();
-        assertThatNoException().isThrownBy(() -> repository.deleteById(null));
+        assertThatThrownBy(() -> repository.findById(null))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Match ID cannot be null or empty");
+        assertThatThrownBy(() -> repository.existsById(null))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Match ID cannot be null or empty");
+        assertThatThrownBy(() -> repository.deleteById(null))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Match ID cannot be null or empty");
     }
 
     @Test
     @DisplayName("Should handle empty match ID gracefully")
     void shouldHandleEmptyMatchIdGracefully() {
         // When & Then
-        assertThat(repository.findById("")).isEmpty();
-        assertThat(repository.existsById("")).isFalse();
-        assertThatNoException().isThrownBy(() -> repository.deleteById(""));
+        assertThatThrownBy(() -> repository.findById(""))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Match ID cannot be null or empty");
+        assertThatThrownBy(() -> repository.existsById(""))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Match ID cannot be null or empty");
+        assertThatThrownBy(() -> repository.deleteById(""))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Match ID cannot be null or empty");
     }
 
     @Test
@@ -358,11 +370,10 @@ class InMemoryMatchRepositoryTest {
     @Test
     @DisplayName("Should handle null status in findByStatus gracefully")
     void shouldHandleNullStatusInFindByStatusGracefully() {
-        // When
-        List<Match> result = repository.findByStatus(null);
-        
-        // Then
-        assertThat(result).isEmpty();
+        // When & Then
+        assertThatThrownBy(() -> repository.findByStatus(null))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Match status cannot be null");
     }
 
     @Test
