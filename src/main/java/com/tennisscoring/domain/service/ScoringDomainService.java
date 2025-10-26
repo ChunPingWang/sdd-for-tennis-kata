@@ -2,22 +2,21 @@ package com.tennisscoring.domain.service;
 
 import com.tennisscoring.domain.exception.InvalidMatchStateException;
 import com.tennisscoring.domain.model.*;
+
 import org.springframework.stereotype.Component;
 
 /**
  * Domain service responsible for handling tennis scoring logic.
  * 負責處理網球計分邏輯的領域服務
  * 
- * This service encapsulates the complex scoring rules of tennis including:
- * - Regular game scoring (15-30-40)
- * - Deuce and advantage handling
- * - Tiebreak scoring
- * - Set and match progression
+ * This service follows the Open-Closed Principle by using the Strategy pattern
+ * to handle different scoring systems (regular games vs tiebreaks).
+ * New scoring strategies can be added without modifying this service.
  * 
  * Requirements: 2.1, 2.3, 3.1, 3.2, 3.3, 5.1, 5.2, 5.3
  */
 @Component
-public class ScoringDomainService {
+public class ScoringDomainService implements ScoringService {
     
     private final ValidationService validationService;
     
@@ -50,7 +49,7 @@ public class ScoringDomainService {
             throw new InvalidMatchStateException("No active game found in match: " + match.getMatchId());
         }
         
-        // Score the point in the current game
+        // Score the point using the game's internal logic
         PlayerId opponentId = getOpponentId(match, playerId);
         boolean gameCompleted = currentGame.scorePoint(playerId, opponentId);
         
@@ -150,7 +149,11 @@ public class ScoringDomainService {
         
         try {
             Game currentGame = match.getCurrentGame();
-            return currentGame != null && currentGame.isDeuce();
+            if (currentGame == null) {
+                return false;
+            }
+            
+            return currentGame.isDeuce();
         } catch (Exception e) {
             return false;
         }
@@ -171,7 +174,11 @@ public class ScoringDomainService {
         
         try {
             Game currentGame = match.getCurrentGame();
-            return currentGame != null && currentGame.hasAdvantage(playerId);
+            if (currentGame == null) {
+                return false;
+            }
+            
+            return currentGame.hasAdvantage(playerId);
         } catch (Exception e) {
             return false;
         }

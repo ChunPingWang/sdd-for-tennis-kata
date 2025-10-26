@@ -14,7 +14,7 @@
 
 ## 🏗️ 系統架構
 
-本專案採用**六角形架構**（Ports and Adapters）設計原則：
+本專案採用**六角形架構**（Ports and Adapters）設計原則，嚴格遵循 **SOLID 原則**：
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -41,6 +41,25 @@
 │  └─────────────────┘  └─────────────────┘                 │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+### 🎯 SOLID 原則實作
+
+本系統嚴格遵循 SOLID 原則，確保程式碼的可維護性、可擴展性和可測試性：
+
+| 原則 | 實作方式 | 驗證狀態 |
+|------|----------|----------|
+| **S**RP | 每個服務類別只負責單一職責 | ✅ 通過 |
+| **O**CP | 工廠模式支援擴展，策略模式處理變化 | ✅ 通過 |
+| **L**SP | 所有實作都可完全替換其抽象 | ✅ 通過 |
+| **I**SP | 介面專注且精簡，客戶端只依賴需要的功能 | ✅ 通過 |
+| **D**IP | 高層模組依賴抽象，使用依賴注入 | ✅ 通過 |
+
+**SOLID 原則驗證**：執行 `mvn test -Dtest=SolidPrinciplesTest` 來驗證合規性
+
+**相關文件**：
+- [SOLID 原則合規性報告](SOLID_PRINCIPLES_COMPLIANCE.md)
+- [SOLID 原則開發者指南](SOLID_PRINCIPLES_GUIDE.md)
+- [程式碼審查檢查清單](CODE_REVIEW_CHECKLIST.md)
 
 ## 🚀 快速開始
 
@@ -507,6 +526,20 @@ curl -X POST http://localhost:8080/api/matches/completed-match-id/score \
 ### 執行所有測試
 ```bash
 mvn test
+```
+
+### SOLID 原則測試
+```bash
+# 驗證 SOLID 原則合規性
+mvn test -Dtest=SolidPrinciplesTest
+
+# 預期結果：6/6 測試通過
+# ✅ Single Responsibility Principle (SRP)
+# ✅ Open-Closed Principle (OCP)  
+# ✅ Liskov Substitution Principle (LSP)
+# ✅ Interface Segregation Principle (ISP)
+# ✅ Dependency Inversion Principle (DIP)
+# ✅ SOLID Principles Integration
 ```
 
 ### 分類執行測試

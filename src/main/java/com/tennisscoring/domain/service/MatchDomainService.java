@@ -1,14 +1,10 @@
 package com.tennisscoring.domain.service;
 
-import com.tennisscoring.domain.event.MatchCompletedEvent;
-import com.tennisscoring.domain.event.MatchCreatedEvent;
-import com.tennisscoring.domain.event.PointScoredEvent;
 import com.tennisscoring.domain.exception.InvalidMatchStateException;
 import com.tennisscoring.domain.exception.MatchNotFoundException;
+import com.tennisscoring.domain.factory.MatchFactoryRegistry;
 import com.tennisscoring.domain.model.*;
-import com.tennisscoring.ports.primary.MatchManagementPort;
-import com.tennisscoring.ports.primary.QueryPort;
-import com.tennisscoring.ports.secondary.EventPublisherPort;
+import com.tennisscoring.ports.primary.*;
 import com.tennisscoring.ports.secondary.MatchRepositoryPort;
 import org.springframework.stereotype.Service;
 
@@ -19,17 +15,19 @@ import java.util.Objects;
  * Domain service implementing match management and query operations.
  * 實作比賽管理和查詢操作的領域服務
  * 
- * This service acts as the primary application service coordinating between
- * the domain model, scoring service, repository, and event publishing.
+ * This service follows the Single Responsibility Principle by focusing
+ * solely on core match management operations. Statistics and event publishing
+ * are handled by dedicated services.
  * 
  * Requirements: 1.1, 2.2, 4.4, 6.1, 6.2, 6.3
  */
 @Service
-public class MatchDomainService implements MatchManagementPort, QueryPort {
+public class MatchDomainService implements MatchService, MatchCreationPort, MatchScoringPort, MatchDeletionPort, MatchQueryPort {
     
     private final MatchRepositoryPort matchRepository;
     private final ScoringDomainService scoringService;
-    private final EventPublisherPort eventPublisher;
+    private final MatchEventService eventService;
+    private final MatchFactoryRegistry matchFactory;
     private final ValidationService validationService;
     
     /**
@@ -39,11 +37,13 @@ public class MatchDomainService implements MatchManagementPort, QueryPort {
     public MatchDomainService(
             MatchRepositoryPort matchRepository,
             ScoringDomainService scoringService,
-            EventPublisherPort eventPublisher,
+            MatchEventService eventService,
+            MatchFactoryRegistry matchFactory,
             ValidationService validationService) {
         this.matchRepository = Objects.requireNonNull(matchRepository, "Match repository cannot be null");
         this.scoringService = Objects.requireNonNull(scoringService, "Scoring service cannot be null");
-        this.eventPublisher = Objects.requireNonNull(eventPublisher, "Event publisher cannot be null");
+        this.eventService = Objects.requireNonNull(eventService, "Event service cannot be null");
+        this.matchFactory = Objects.requireNonNull(matchFactory, "Match factory cannot be null");
         this.validationService = Objects.requireNonNull(validationService, "Validation service cannot be null");
     }
     
@@ -51,21 +51,29 @@ public class MatchDomainService implements MatchManagementPort, QueryPort {
     
     @Override
     public Match createMatch(String player1Name, String player2Name) {
+        return createMatch(null, player1Name, player2Name);
+    }
+    
+    /**
+     * Create a match with a specific type.
+     * 創建特定類型的比賽
+     * 
+     * @param matchType the type of match to create (null for default)
+     * @param player1Name name of the first player
+     * @param player2Name name of the second player
+     * @return the created match
+     */
+    public Match createMatch(String matchType, String player1Name, String player2Name) {
         validationService.validatePlayerNames(player1Name, player2Name);
         
-        // Create new match using factory method
-        Match match = Match.create(player1Name, player2Name);
+        // Create new match using factory registry
+        Match match = matchFactory.createMatch(matchType, player1Name, player2Name);
         
         // Save to repository
         Match savedMatch = matchRepository.save(match);
         
         // Publish match created event
-        MatchCreatedEvent event = new MatchCreatedEvent(
-            savedMatch.getMatchId(),
-            savedMatch.getPlayer1().getName(),
-            savedMatch.getPlayer2().getName()
-        );
-        eventPublisher.publishMatchCreated(event);
+        eventService.publishMatchCreated(savedMatch);
         
         return savedMatch;
     }
@@ -88,27 +96,14 @@ public class MatchDomainService implements MatchManagementPort, QueryPort {
         Match updatedMatch = matchRepository.save(match);
         
         // Publish point scored event
-        PointScoredEvent pointEvent = new PointScoredEvent(
-            updatedMatch.getMatchId(),
-            playerId,
-            updatedMatch.getCurrentScore(),
-            updatedMatch.getCurrentSetNumber(),
-            updatedMatch.getCurrentGameNumber()
-        );
-        eventPublisher.publishPointScored(pointEvent);
+        eventService.publishPointScored(updatedMatch, playerId);
         
         // Publish additional events based on game state
-        publishGameStateEvents(updatedMatch, playerIdObj);
+        eventService.publishGameStateEvents(updatedMatch, playerIdObj);
         
         // If match completed, publish match completed event
         if (matchCompleted) {
-            MatchCompletedEvent completedEvent = new MatchCompletedEvent(
-                updatedMatch.getMatchId(),
-                updatedMatch.getWinner().getValue(),
-                updatedMatch.getCurrentScore(),
-                updatedMatch.getSets().size()
-            );
-            eventPublisher.publishMatchCompleted(completedEvent);
+            eventService.publishMatchCompleted(updatedMatch);
         }
         
         return updatedMatch;
@@ -127,7 +122,7 @@ public class MatchDomainService implements MatchManagementPort, QueryPort {
         matchRepository.deleteById(matchId);
         
         // Publish match deleted event
-        eventPublisher.publishMatchDeleted(matchId, "system");
+        eventService.publishMatchDeleted(matchId, "system");
     }
     
     /**
@@ -185,124 +180,7 @@ public class MatchDomainService implements MatchManagementPort, QueryPort {
     
 
     
-    /**
-     * Publish additional events based on game state changes.
-     * 根據遊戲狀態變化發布額外事件
-     */
-    private void publishGameStateEvents(Match match, PlayerId playerId) {
-        try {
-            // Check if a game was completed
-            Game currentGame = match.getCurrentGame();
-            if (currentGame != null && currentGame.isCompleted()) {
-                String winnerId = currentGame.getWinner().getValue();
-                eventPublisher.publishGameCompleted(
-                    match.getMatchId(), 
-                    currentGame.getGameNumber(), 
-                    winnerId
-                );
-            }
-            
-            // Check if a set was completed
-            Set currentSet = match.getCurrentSet();
-            if (currentSet != null && currentSet.isCompleted()) {
-                String winnerId = currentSet.getWinner().getValue();
-                eventPublisher.publishSetCompleted(
-                    match.getMatchId(), 
-                    currentSet.getSetNumber(), 
-                    winnerId
-                );
-            }
-        } catch (Exception e) {
-            // Log error but don't fail the operation
-            // In a real implementation, we would use a proper logger
-            System.err.println("Error publishing game state events: " + e.getMessage());
-        }
-    }
-    
-    // Additional business methods
-    
-    /**
-     * Get the current score summary for a match.
-     * 獲取比賽的當前比分摘要
-     * 
-     * @param matchId the match ID
-     * @return formatted score string
-     */
-    public String getCurrentScore(String matchId) {
-        validationService.validateMatchId(matchId);
-        Match match = getMatchById(matchId);
-        return scoringService.calculateCurrentScore(match);
-    }
-    
-    /**
-     * Check if a match is in deuce state.
-     * 檢查比賽是否處於平分狀態
-     * 
-     * @param matchId the match ID
-     * @return true if current game is in deuce
-     */
-    public boolean isMatchInDeuce(String matchId) {
-        validationService.validateMatchId(matchId);
-        Match match = getMatchById(matchId);
-        return scoringService.isCurrentGameDeuce(match);
-    }
-    
-    /**
-     * Check if a player has advantage in the current game.
-     * 檢查球員在當前局是否有優勢
-     * 
-     * @param matchId the match ID
-     * @param playerId the player ID
-     * @return true if player has advantage
-     */
-    public boolean playerHasAdvantage(String matchId, String playerId) {
-        validationService.validateMatchId(matchId);
-        validationService.validatePlayerId(playerId);
-        
-        Match match = getMatchById(matchId);
-        PlayerId playerIdObj = PlayerId.of(playerId);
-        
-        return scoringService.hasAdvantage(match, playerIdObj);
-    }
-    
-    /**
-     * Check if the current game is a tiebreak.
-     * 檢查當前局是否為搶七局
-     * 
-     * @param matchId the match ID
-     * @return true if current game is a tiebreak
-     */
-    public boolean isCurrentGameTiebreak(String matchId) {
-        validationService.validateMatchId(matchId);
-        Match match = getMatchById(matchId);
-        return scoringService.isCurrentGameTiebreak(match);
-    }
-    
-    /**
-     * Get match statistics summary.
-     * 獲取比賽統計摘要
-     * 
-     * @param matchId the match ID
-     * @return match statistics
-     */
-    public MatchStatistics getMatchStatistics(String matchId) {
-        validationService.validateMatchId(matchId);
-        Match match = getMatchById(matchId);
-        
-        return new MatchStatistics(
-            match.getMatchId(),
-            match.getPlayer1().getName(),
-            match.getPlayer2().getName(),
-            match.getPlayer1().getSetsWon(),
-            match.getPlayer2().getSetsWon(),
-            match.getPlayer1().getPointsWon(),
-            match.getPlayer2().getPointsWon(),
-            match.getCurrentSetNumber(),
-            match.getCurrentGameNumber(),
-            match.getStatus(),
-            match.isCurrentGameTiebreak()
-        );
-    }
+
     
     /**
      * Cancel a match that is in progress.
@@ -324,55 +202,9 @@ public class MatchDomainService implements MatchManagementPort, QueryPort {
         Match updatedMatch = matchRepository.save(match);
         
         // Publish match deleted event (cancelled matches are considered deleted)
-        eventPublisher.publishMatchDeleted(matchId, "cancelled");
+        eventService.publishMatchDeleted(matchId, "cancelled");
         
         return updatedMatch;
     }
     
-    /**
-     * Inner class for match statistics.
-     * 比賽統計的內部類別
-     */
-    public static class MatchStatistics {
-        private final String matchId;
-        private final String player1Name;
-        private final String player2Name;
-        private final int player1Sets;
-        private final int player2Sets;
-        private final int player1Points;
-        private final int player2Points;
-        private final int currentSet;
-        private final int currentGame;
-        private final MatchStatus status;
-        private final boolean isTiebreak;
-        
-        public MatchStatistics(String matchId, String player1Name, String player2Name,
-                             int player1Sets, int player2Sets, int player1Points, int player2Points,
-                             int currentSet, int currentGame, MatchStatus status, boolean isTiebreak) {
-            this.matchId = matchId;
-            this.player1Name = player1Name;
-            this.player2Name = player2Name;
-            this.player1Sets = player1Sets;
-            this.player2Sets = player2Sets;
-            this.player1Points = player1Points;
-            this.player2Points = player2Points;
-            this.currentSet = currentSet;
-            this.currentGame = currentGame;
-            this.status = status;
-            this.isTiebreak = isTiebreak;
-        }
-        
-        // Getters
-        public String getMatchId() { return matchId; }
-        public String getPlayer1Name() { return player1Name; }
-        public String getPlayer2Name() { return player2Name; }
-        public int getPlayer1Sets() { return player1Sets; }
-        public int getPlayer2Sets() { return player2Sets; }
-        public int getPlayer1Points() { return player1Points; }
-        public int getPlayer2Points() { return player2Points; }
-        public int getCurrentSet() { return currentSet; }
-        public int getCurrentGame() { return currentGame; }
-        public MatchStatus getStatus() { return status; }
-        public boolean isTiebreak() { return isTiebreak; }
-    }
 }

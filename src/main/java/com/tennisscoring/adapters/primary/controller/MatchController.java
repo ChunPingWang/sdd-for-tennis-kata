@@ -5,7 +5,9 @@ import com.tennisscoring.adapters.primary.dto.request.ScorePointRequest;
 import com.tennisscoring.adapters.primary.dto.response.MatchResponse;
 import com.tennisscoring.adapters.primary.mapper.MatchMapper;
 import com.tennisscoring.domain.model.Match;
-import com.tennisscoring.domain.service.MatchDomainService;
+import com.tennisscoring.domain.service.MatchService;
+import com.tennisscoring.domain.service.StatisticsService;
+import com.tennisscoring.domain.service.MatchStatisticsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -31,12 +33,16 @@ import java.util.stream.Collectors;
 @Tag(name = "Match Management", description = "網球比賽管理 API")
 public class MatchController {
     
-    private final MatchDomainService matchDomainService;
+    private final MatchService matchService;
+    private final StatisticsService statisticsService;
     private final MatchMapper matchMapper;
     
     @Autowired
-    public MatchController(MatchDomainService matchDomainService, MatchMapper matchMapper) {
-        this.matchDomainService = matchDomainService;
+    public MatchController(MatchService matchService, 
+                          StatisticsService statisticsService,
+                          MatchMapper matchMapper) {
+        this.matchService = matchService;
+        this.statisticsService = statisticsService;
         this.matchMapper = matchMapper;
     }
     
@@ -63,7 +69,7 @@ public class MatchController {
     public ResponseEntity<MatchResponse> createMatch(
             @Valid @RequestBody CreateMatchRequest request) {
         
-        Match match = matchDomainService.createMatch(
+        Match match = matchService.createMatch(
             request.getPlayer1Name(), 
             request.getPlayer2Name()
         );
@@ -92,7 +98,7 @@ public class MatchController {
             @Parameter(description = "比賽ID", required = true)
             @PathVariable String matchId) {
         
-        Match match = matchDomainService.getMatch(matchId);
+        Match match = matchService.getMatch(matchId);
         MatchResponse response = matchMapper.toResponse(match);
         return ResponseEntity.ok(response);
     }
@@ -110,7 +116,7 @@ public class MatchController {
     })
     @GetMapping
     public ResponseEntity<List<MatchResponse>> getAllMatches() {
-        List<Match> matches = matchDomainService.getAllMatches();
+        List<Match> matches = matchService.getAllMatches();
         List<MatchResponse> responses = matches.stream()
                 .map(matchMapper::toResponse)
                 .collect(Collectors.toList());
@@ -146,7 +152,7 @@ public class MatchController {
             @PathVariable String matchId,
             @Valid @RequestBody ScorePointRequest request) {
         
-        Match match = matchDomainService.scorePoint(matchId, request.getPlayerId());
+        Match match = matchService.scorePoint(matchId, request.getPlayerId());
         MatchResponse response = matchMapper.toResponse(match);
         
         return ResponseEntity.ok(response);
@@ -176,9 +182,7 @@ public class MatchController {
             @Parameter(description = "比賽ID", required = true)
             @PathVariable String matchId) {
         
-        Match match = matchDomainService.getMatch(matchId);
-        match.cancel();
-        match = matchDomainService.updateMatch(match);
+        Match match = matchService.cancelMatch(matchId);
         
         MatchResponse response = matchMapper.toResponse(match);
         return ResponseEntity.ok(response);
@@ -203,7 +207,7 @@ public class MatchController {
             @Parameter(description = "比賽ID", required = true)
             @PathVariable String matchId) {
         
-        matchDomainService.deleteMatch(matchId);
+        matchService.deleteMatch(matchId);
         return ResponseEntity.noContent().build();
     }
     
@@ -219,25 +223,13 @@ public class MatchController {
     })
     @GetMapping("/statistics")
     public ResponseEntity<MatchStatisticsResponse> getMatchStatistics() {
-        List<Match> allMatches = matchDomainService.getAllMatches();
-        
-        long inProgressCount = allMatches.stream()
-                .filter(Match::isInProgress)
-                .count();
-        
-        long completedCount = allMatches.stream()
-                .filter(Match::isCompleted)
-                .count();
-        
-        long cancelledCount = allMatches.stream()
-                .filter(Match::isCancelled)
-                .count();
+        MatchStatisticsService.SystemStatistics systemStats = statisticsService.getSystemStatistics();
         
         MatchStatisticsResponse statistics = new MatchStatisticsResponse(
-                allMatches.size(),
-                (int) inProgressCount,
-                (int) completedCount,
-                (int) cancelledCount
+                systemStats.getTotalMatches(),
+                systemStats.getInProgressMatches(),
+                systemStats.getCompletedMatches(),
+                systemStats.getCancelledMatches()
         );
         
         return ResponseEntity.ok(statistics);

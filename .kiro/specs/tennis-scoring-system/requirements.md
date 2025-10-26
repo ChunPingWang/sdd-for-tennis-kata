@@ -175,3 +175,51 @@
 3. THE Swagger_Documentation SHALL 描述所有端點的參數和回應格式
 4. THE Swagger_Documentation SHALL 包含API使用範例
 5. THE Swagger_Documentation SHALL 可透過/swagger-ui.html路徑存取
+
+### 需求 14
+
+**使用者故事:** 作為一個開發團隊成員，我想要系統嚴格遵循 SOLID 原則，以便確保程式碼的可維護性、可擴展性和可測試性。
+
+#### 驗收標準
+
+1. THE Tennis_Scoring_System SHALL 遵循單一職責原則，每個類別只負責一項職責
+2. THE Tennis_Scoring_System SHALL 遵循開放封閉原則，對擴展開放對修改封閉
+3. THE Tennis_Scoring_System SHALL 遵循里氏替換原則，子類別可以完全替換父類別
+4. THE Tennis_Scoring_System SHALL 遵循介面隔離原則，介面專注且精簡
+5. THE Tennis_Scoring_System SHALL 遵循依賴反轉原則，依賴抽象而非具體實作
+
+### 需求 15
+
+**使用者故事:** 作為一個開發團隊成員，我想要有清晰的職責分離，以便每個組件都有明確的責任範圍。
+
+#### 驗收標準
+
+1. THE Tennis_Scoring_System SHALL 將統計功能分離到專用的統計服務
+2. THE Tennis_Scoring_System SHALL 將事件發布邏輯分離到專用的事件服務
+3. THE Tennis_Scoring_System SHALL 將驗證邏輯集中到專用的驗證服務
+4. THE Tennis_Scoring_System SHALL 將資料轉換邏輯分離到專用的映射器
+5. THE Tennis_Scoring_System SHALL 確保每個服務類別只有一個改變的理由
+
+### 需求 16
+
+**使用者故事:** 作為一個開發團隊成員，我想要系統支援策略模式和工廠模式，以便能夠輕鬆擴展不同的計分規則和比賽類型。
+
+#### 驗收標準
+
+1. THE Tennis_Scoring_System SHALL 使用策略模式處理不同的計分邏輯
+2. THE Tennis_Scoring_System SHALL 使用工廠模式支援不同類型的比賽創建
+3. THE Tennis_Scoring_System SHALL 允許在不修改現有程式碼的情況下添加新的計分規則
+4. THE Tennis_Scoring_System SHALL 允許在不修改現有程式碼的情況下添加新的比賽類型
+5. THE Tennis_Scoring_System SHALL 通過配置或依賴注入選擇具體的策略實作
+
+### 需求 17
+
+**使用者故事:** 作為一個開發團隊成員，我想要有精簡且專注的介面，以便客戶端只依賴它們需要的功能。
+
+#### 驗收標準
+
+1. THE Tennis_Scoring_System SHALL 將比賽管理功能分離為多個專用介面
+2. THE Tennis_Scoring_System SHALL 將事件發布功能分離為專用的事件介面
+3. THE Tennis_Scoring_System SHALL 確保每個介面只包含相關的方法
+4. THE Tennis_Scoring_System SHALL 避免臃腫的介面設計
+5. THE Tennis_Scoring_System SHALL 允許客戶端選擇性地依賴所需的介面

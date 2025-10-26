@@ -254,3 +254,65 @@
   - 驗證所有 API 端點文件完整性
   - 測試 API 互動功能
   - _需求: 13.1, 13.2, 13.3, 13.4, 13.5_
+
+- [ ] 12. 重構程式碼以遵循 SOLID 原則
+  - 分析現有程式碼的 SOLID 原則合規性
+  - 重構違反 SOLID 原則的程式碼
+  - 建立更清晰的職責分離和依賴管理
+  - _需求: 10.4, 9.4_
+
+- [x] 12.1 應用單一職責原則 (SRP) 重構
+  - 將 MatchDomainService 中的統計功能分離到 MatchStatisticsService
+  - 將事件發布邏輯分離到 MatchEventService
+  - 重構 MatchController 中的統計邏輯到專用服務
+  - _需求: 10.4_
+
+- [x] 12.2 應用開放封閉原則 (OCP) 重構
+  - 建立 ScoringStrategy 介面和具體實作
+  - 建立 MatchFactory 介面支援不同類型比賽
+  - 重構計分邏輯使用策略模式
+  - _需求: 2.1, 2.3, 5.1, 5.2_
+
+- [x] 12.3 應用里氏替換原則 (LSP) 重構
+  - 建立 BaseMatchRepository 抽象類別
+  - 確保所有 Repository 實作遵循相同契約
+  - 重構 EventPublisher 實作確保可替換性
+  - _需求: 1.3, 6.3_
+
+- [x] 12.4 應用介面隔離原則 (ISP) 重構
+  - 將 MatchManagementPort 分離為多個專用介面
+  - 將 EventPublisherPort 分離為專用事件介面
+  - 重構 Domain Service 依賴更精簡的介面
+  - _需求: 1.1, 2.1, 6.3_
+
+- [x] 12.5 應用依賴反轉原則 (DIP) 重構
+  - 為 Domain Service 建立介面抽象
+  - 重構 Controller 依賴服務介面而非具體實作
+  - 建立 Configuration 類別管理依賴注入
+  - _需求: 10.4, 10.5_
+
+- [x] 12.6 建立 SOLID 原則驗證測試
+  - 撰寫測試驗證 SRP 合規性
+  - 撰寫測試驗證 OCP 擴展能力
+  - 撰寫測試驗證 LSP 替換能力
+  - 撰寫測試驗證 ISP 介面隔離
+  - 撰寫測試驗證 DIP 依賴反轉
+  - _需求: 12.1, 12.5_
+
+- [x] 13. 更新文件和範例以反映 SOLID 原則
+  - 更新 README.md 包含 SOLID 原則說明
+  - 建立 SOLID 原則最佳實務文件
+  - 更新 API 文件反映新的架構結構
+  - _需求: 13.4_
+
+- [x] 13.1 更新專案文件
+  - 更新 README.md 包含 SOLID 原則架構說明
+  - 建立 ARCHITECTURE.md 詳細說明設計原則
+  - 更新程式碼註解反映 SOLID 原則應用
+  - _需求: 13.4_
+
+- [x] 13.2 建立 SOLID 原則範例和指南
+  - 建立每個 SOLID 原則的程式碼範例
+  - 撰寫開發者指南說明如何遵循 SOLID 原則
+  - 建立程式碼審查檢查清單
+  - _需求: 13.4_

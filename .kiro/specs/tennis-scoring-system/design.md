@@ -1134,6 +1134,196 @@ public class OpenApiConfig {
 - 考慮實作快取層 (Redis)
 - 支援水平擴展的無狀態設計
 
+## SOLID 原則設計指導
+
+### 概述
+本系統嚴格遵循 SOLID 原則，確保程式碼的可維護性、可擴展性和可測試性。以下詳細說明每個原則在系統中的應用：
+
+### 1. 單一職責原則 (Single Responsibility Principle - SRP)
+
+#### 原則說明
+每個類別應該只有一個改變的理由，即只負責一項職責。
+
+#### 系統應用
+- **MatchDomainService**: 專門負責比賽管理的業務邏輯協調
+- **ScoringDomainService**: 專門負責計分邏輯的處理
+- **ValidationService**: 專門負責輸入驗證和業務規則驗證
+- **MatchController**: 專門負責 HTTP 請求處理和回應
+- **MatchMapper**: 專門負責領域物件與 DTO 之間的轉換
+
+#### 改進建議
+```java
+// 將 MatchDomainService 中的統計功能分離
+public class MatchStatisticsService {
+    public MatchStatistics getMatchStatistics(String matchId) { ... }
+    public SystemStatistics getSystemStatistics() { ... }
+}
+
+// 將事件發布邏輯分離
+public class MatchEventService {
+    public void publishMatchEvents(Match match, String eventType) { ... }
+}
+```
+
+### 2. 開放封閉原則 (Open/Closed Principle - OCP)
+
+#### 原則說明
+軟體實體應該對擴展開放，對修改封閉。
+
+#### 系統應用
+- **Port 介面**: 定義穩定的契約，允許不同的實作方式
+- **Strategy 模式**: 計分邏輯可以擴展不同的計分規則
+- **Factory 模式**: Match 創建邏輯可以擴展不同類型的比賽
+
+#### 改進建議
+```java
+// 抽象計分策略
+public interface ScoringStrategy {
+    boolean scorePoint(Game game, PlayerId playerId, PlayerId opponentId);
+}
+
+public class RegularScoringStrategy implements ScoringStrategy { ... }
+public class TiebreakScoringStrategy implements ScoringStrategy { ... }
+
+// 抽象比賽類型工廠
+public interface MatchFactory {
+    Match createMatch(String player1Name, String player2Name);
+}
+
+public class SinglesMatchFactory implements MatchFactory { ... }
+public class DoublesMatchFactory implements MatchFactory { ... }
+```
+
+### 3. 里氏替換原則 (Liskov Substitution Principle - LSP)
+
+#### 原則說明
+子類別必須能夠替換其父類別而不影響程式的正確性。
+
+#### 系統應用
+- **Repository 實作**: InMemoryMatchRepository 可以被 DatabaseMatchRepository 替換
+- **Event Publisher 實作**: NoOpEventPublisher 可以被 RealEventPublisher 替換
+- **Validation 實作**: 不同的驗證器實作可以互相替換
+
+#### 改進建議
+```java
+// 確保所有 Repository 實作都遵循相同的契約
+public abstract class BaseMatchRepository implements MatchRepositoryPort {
+    protected abstract Match doSave(Match match);
+    protected abstract Optional<Match> doFindById(String matchId);
+    
+    @Override
+    public final Match save(Match match) {
+        validateMatch(match);
+        return doSave(match);
+    }
+    
+    private void validateMatch(Match match) { ... }
+}
+```
+
+### 4. 介面隔離原則 (Interface Segregation Principle - ISP)
+
+#### 原則說明
+客戶端不應該被迫依賴它們不使用的介面。
+
+#### 系統應用
+- **分離的 Port 介面**: MatchManagementPort 和 QueryPort 分離
+- **專用的 Event 介面**: 不同類型的事件有專用的發布介面
+
+#### 改進建議
+```java
+// 將 MatchManagementPort 進一步細分
+public interface MatchCreationPort {
+    Match createMatch(String player1Name, String player2Name);
+}
+
+public interface MatchScoringPort {
+    Match scorePoint(String matchId, String playerId);
+}
+
+public interface MatchLifecyclePort {
+    void deleteMatch(String matchId);
+    Match cancelMatch(String matchId);
+}
+
+// 將 EventPublisherPort 細分
+public interface MatchEventPublisher {
+    void publishMatchCreated(MatchCreatedEvent event);
+    void publishMatchCompleted(MatchCompletedEvent event);
+}
+
+public interface GameEventPublisher {
+    void publishPointScored(PointScoredEvent event);
+    void publishGameCompleted(GameCompletedEvent event);
+}
+```
+
+### 5. 依賴反轉原則 (Dependency Inversion Principle - DIP)
+
+#### 原則說明
+高層模組不應該依賴低層模組，兩者都應該依賴抽象。
+
+#### 系統應用
+- **Domain Service**: 依賴 Port 介面而非具體實作
+- **Controller**: 依賴 Domain Service 介面而非具體實作
+- **依賴注入**: 使用 Spring 的 DI 容器管理依賴關係
+
+#### 改進建議
+```java
+// 為 Domain Service 創建介面
+public interface MatchManagementService {
+    Match createMatch(String player1Name, String player2Name);
+    Match scorePoint(String matchId, String playerId);
+    void deleteMatch(String matchId);
+}
+
+public interface MatchQueryService {
+    Match getMatch(String matchId);
+    List<Match> getAllMatches();
+    List<Match> getMatchesByStatus(MatchStatus status);
+}
+
+// Controller 依賴介面而非具體實作
+@RestController
+public class MatchController {
+    private final MatchManagementService matchManagement;
+    private final MatchQueryService matchQuery;
+    
+    public MatchController(MatchManagementService matchManagement, 
+                          MatchQueryService matchQuery) {
+        this.matchManagement = matchManagement;
+        this.matchQuery = matchQuery;
+    }
+}
+```
+
+### SOLID 原則檢查清單
+
+#### SRP 檢查項目
+- [ ] 每個類別只有一個改變的理由
+- [ ] 類別的方法都圍繞同一個職責
+- [ ] 沒有 God Class 或 God Method
+
+#### OCP 檢查項目
+- [ ] 新功能可以通過擴展而非修改現有程式碼來實現
+- [ ] 使用抽象和多型來支援擴展
+- [ ] 核心業務邏輯對修改封閉
+
+#### LSP 檢查項目
+- [ ] 子類別可以完全替換父類別
+- [ ] 子類別不會改變父類別的預期行為
+- [ ] 介面實作遵循相同的契約
+
+#### ISP 檢查項目
+- [ ] 介面專注且精簡
+- [ ] 客戶端只依賴它們需要的介面
+- [ ] 沒有臃腫的介面
+
+#### DIP 檢查項目
+- [ ] 高層模組依賴抽象而非具體實作
+- [ ] 依賴關係通過依賴注入管理
+- [ ] 抽象不依賴細節，細節依賴抽象
+
 ## 安全性考量
 
 ### 1. 輸入驗證

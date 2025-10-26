@@ -2,7 +2,6 @@ package com.tennisscoring.adapters.secondary.repository;
 
 import com.tennisscoring.domain.model.Match;
 import com.tennisscoring.domain.model.MatchStatus;
-import com.tennisscoring.ports.secondary.MatchRepositoryPort;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -15,85 +14,45 @@ import java.util.stream.Collectors;
  * In-memory implementation of MatchRepositoryPort using ConcurrentHashMap for thread safety.
  * 使用 ConcurrentHashMap 實作執行緒安全的記憶體儲存
  * 
- * This implementation provides thread-safe operations for storing and retrieving
- * tennis match data in memory. Suitable for development and testing environments.
+ * This implementation follows the Liskov Substitution Principle by extending
+ * BaseMatchRepository and can be substituted with any other repository implementation
+ * without breaking functionality.
  * 
  * Requirements: 1.3, 9.4
  */
 @Repository
-public class InMemoryMatchRepository implements MatchRepositoryPort {
+public class InMemoryMatchRepository extends BaseMatchRepository {
     
     private final ConcurrentHashMap<String, Match> matches = new ConcurrentHashMap<>();
     
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public Match save(Match match) {
-        if (match == null) {
-            throw new IllegalArgumentException("Match cannot be null");
-        }
-        
-        String matchId = match.getMatchId();
-        if (matchId == null || matchId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Match ID cannot be null or empty");
-        }
-        
-        matches.put(matchId, match);
+    protected Match doSave(Match match) {
+        matches.put(match.getMatchId(), match);
         return match;
     }
     
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public Optional<Match> findById(String matchId) {
-        if (matchId == null || matchId.trim().isEmpty()) {
-            return Optional.empty();
-        }
-        
+    protected Optional<Match> doFindById(String matchId) {
         return Optional.ofNullable(matches.get(matchId));
     }
     
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public List<Match> findAll() {
         return new ArrayList<>(matches.values());
     }
     
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public void deleteById(String matchId) {
-        if (matchId != null && !matchId.trim().isEmpty()) {
-            matches.remove(matchId);
-        }
+    protected void doDeleteById(String matchId) {
+        matches.remove(matchId);
     }
     
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public boolean existsById(String matchId) {
-        if (matchId == null || matchId.trim().isEmpty()) {
-            return false;
-        }
-        
+    protected boolean doExistsById(String matchId) {
         return matches.containsKey(matchId);
     }
     
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public List<Match> findByStatus(MatchStatus status) {
-        if (status == null) {
-            return new ArrayList<>();
-        }
-        
+    protected List<Match> doFindByStatus(MatchStatus status) {
         return matches.values().stream()
                 .filter(match -> status.equals(match.getStatus()))
                 .collect(Collectors.toList());
@@ -148,5 +107,15 @@ public class InMemoryMatchRepository implements MatchRepositoryPort {
      */
     public boolean isEmpty() {
         return matches.isEmpty();
+    }
+    
+    @Override
+    public String getRepositoryType() {
+        return "IN_MEMORY";
+    }
+    
+    @Override
+    public boolean isThreadSafe() {
+        return true;
     }
 }
