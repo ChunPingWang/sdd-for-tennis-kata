@@ -70,8 +70,20 @@
         
         <dependency>
             <groupId>io.cucumber</groupId>
-            <artifactId>cucumber-junit-platform-engine</artifactId>
+            <artifactId>cucumber-junit</artifactId>
             <version>${cucumber.version}</version>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -105,7 +117,9 @@
                     <includes>
                         <include>**/*Test.java</include>
                         <include>**/*Tests.java</include>
+                        <include>**/*TestRunner.java</include>
                     </includes>
+                    <argLine>-Dfile.encoding=UTF-8</argLine>
                 </configuration>
             </plugin>
 

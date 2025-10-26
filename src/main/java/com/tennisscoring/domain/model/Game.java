@@ -1,5 +1,6 @@
 package com.tennisscoring.domain.model;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -151,6 +152,26 @@ public class Game {
     }
     
     /**
+     * Get all player scores (for mapper compatibility).
+     * @return map of player IDs to scores
+     */
+    public Map<PlayerId, GameScore> getPlayerScores() {
+        if (isTiebreak) {
+            throw new IllegalStateException("Use getTiebreakScores for tiebreak games");
+        }
+        return Collections.unmodifiableMap(scores);
+    }
+    
+    /**
+     * Get player score (alias for getScore for mapper compatibility).
+     * @param playerId the player's ID
+     * @return the player's current GameScore
+     */
+    public GameScore getPlayerScore(PlayerId playerId) {
+        return getScore(playerId);
+    }
+    
+    /**
      * Get the current score for a player in tiebreak games.
      * @param playerId the player's ID
      * @return the player's current tiebreak score
@@ -176,14 +197,16 @@ public class Game {
             GameScore p2Score = getScore(player2Id);
             
             // Handle deuce and advantage display
-            if (status.isDeuceOrAdvantage()) {
-                if (p1Score == GameScore.ADVANTAGE) {
-                    return "AD-40";
-                } else if (p2Score == GameScore.ADVANTAGE) {
-                    return "40-AD";
+            if (p1Score == GameScore.FORTY && p2Score == GameScore.FORTY) {
+                if (status == GameStatus.DEUCE) {
+                    return "平分";
                 } else {
                     return "40-40";
                 }
+            } else if (p1Score == GameScore.ADVANTAGE) {
+                return "AD-40";
+            } else if (p2Score == GameScore.ADVANTAGE) {
+                return "40-AD";
             }
             
             return p1Score.getDisplayValue() + "-" + p2Score.getDisplayValue();

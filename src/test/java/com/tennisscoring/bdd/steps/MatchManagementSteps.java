@@ -157,8 +157,8 @@ public class MatchManagementSteps {
         assertNull(currentMatch, "比賽不應該被創建");
     }
     
-    @而且("應該顯示錯誤訊息 {string}")
-    public void 應該顯示錯誤訊息(String expectedMessage) {
+    @而且("應該顯示比賽管理錯誤訊息 {string}")
+    public void 應該顯示比賽管理錯誤訊息(String expectedMessage) {
         assertNotNull(lastException, "應該有異常發生");
         String actualMessage = lastException.getMessage();
         assertTrue(actualMessage.contains(expectedMessage) || 
@@ -166,6 +166,10 @@ public class MatchManagementSteps {
                   expectedMessage.equals("球員名稱不能重複") && (lastException instanceof DuplicatePlayerException) ||
                   expectedMessage.equals("球員名稱長度不能超過50個字元") && (lastException instanceof InvalidPlayerNameException),
                   "錯誤訊息應該包含: " + expectedMessage + ", 實際訊息: " + actualMessage);
+    }
+    
+    public Exception getLastException() {
+        return lastException;
     }
     
     @假設("我創建了一場比賽，球員為 {string} 對戰 {string}")

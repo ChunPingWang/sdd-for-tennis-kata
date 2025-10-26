@@ -12,6 +12,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +27,73 @@ import java.util.List;
 public class GlobalExceptionHandler {
     
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    
+    /**
+     * Handle HTTP message not readable exceptions (malformed JSON, missing request body).
+     * 處理 HTTP 訊息不可讀異常（格式錯誤的 JSON、缺少請求體）
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException ex, HttpServletRequest request) {
+        
+        logger.warn("HTTP message not readable: {}", ex.getMessage());
+        
+        String message = "請求格式錯誤或缺少請求體";
+        if (ex.getMessage().contains("Required request body is missing")) {
+            message = "缺少必要的請求體";
+        } else if (ex.getMessage().contains("JSON parse error")) {
+            message = "JSON 格式錯誤";
+        }
+        
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Bad Request",
+                message,
+                HttpStatus.BAD_REQUEST.value(),
+                request.getRequestURI()
+        );
+        
+        return ResponseEntity.badRequest().body(errorResponse);
+    }
+    
+    /**
+     * Handle unsupported media type exceptions.
+     * 處理不支援的媒體類型異常
+     */
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupportedException(
+            HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
+        
+        logger.warn("Unsupported media type: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Unsupported Media Type",
+                "不支援的媒體類型：" + ex.getContentType(),
+                HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(),
+                request.getRequestURI()
+        );
+        
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(errorResponse);
+    }
+    
+    /**
+     * Handle unsupported HTTP method exceptions.
+     * 處理不支援的 HTTP 方法異常
+     */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(
+            HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
+        
+        logger.warn("Method not allowed: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Method Not Allowed",
+                "不支援的 HTTP 方法：" + ex.getMethod(),
+                HttpStatus.METHOD_NOT_ALLOWED.value(),
+                request.getRequestURI()
+        );
+        
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(errorResponse);
+    }
     
     /**
      * Handle validation errors from @Valid annotations.
@@ -195,6 +265,66 @@ public class GlobalExceptionHandler {
     }
     
     /**
+     * Handle validation exceptions from domain services.
+     * 處理來自領域服務的驗證異常
+     */
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ErrorResponse> handleValidationException(
+            ValidationException ex, HttpServletRequest request) {
+        
+        logger.warn("Domain validation error: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Validation Error",
+                ex.getMessage(),
+                HttpStatus.BAD_REQUEST.value(),
+                request.getRequestURI()
+        );
+        
+        return ResponseEntity.badRequest().body(errorResponse);
+    }
+    
+    /**
+     * Handle player not found exceptions.
+     * 處理球員不存在異常
+     */
+    @ExceptionHandler(PlayerNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePlayerNotFoundException(
+            PlayerNotFoundException ex, HttpServletRequest request) {
+        
+        logger.warn("Player not found: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Player Not Found",
+                ex.getMessage(),
+                HttpStatus.BAD_REQUEST.value(),
+                request.getRequestURI()
+        );
+        
+        return ResponseEntity.badRequest().body(errorResponse);
+    }
+    
+    /**
+     * Handle invalid match state exceptions.
+     * 處理無效比賽狀態異常
+     */
+    @ExceptionHandler(InvalidMatchStateException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidMatchStateException(
+            InvalidMatchStateException ex, HttpServletRequest request) {
+        
+        logger.warn("Invalid match state: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Invalid Match State",
+                ex.getMessage(),
+                HttpStatus.CONFLICT.value(),
+                request.getRequestURI()
+        );
+        
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+    
+    /**
      * Handle illegal argument exceptions.
      * 處理非法參數異常
      */
@@ -247,26 +377,6 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse(
                 "Internal Server Error",
                 "系統發生未預期的錯誤，請稍後再試",
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                request.getRequestURI()
-        );
-        
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-    }
-    
-    /**
-     * Handle runtime exceptions.
-     * 處理運行時異常
-     */
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleRuntimeException(
-            RuntimeException ex, HttpServletRequest request) {
-        
-        logger.error("Runtime error occurred", ex);
-        
-        ErrorResponse errorResponse = new ErrorResponse(
-                "Runtime Error",
-                "系統運行時發生錯誤：" + ex.getMessage(),
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 request.getRequestURI()
         );

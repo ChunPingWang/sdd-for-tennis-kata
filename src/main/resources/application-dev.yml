@@ -1,0 +1,57 @@
+# Development Environment Configuration
+# 開發環境配置
+
+server:
+  port: 8080
+
+spring:
+  # Development specific Jackson configuration
+  jackson:
+    serialization:
+      indent-output: true
+    deserialization:
+      fail-on-unknown-properties: false
+
+# Development logging
+logging:
+  level:
+    root: INFO
+    com.tennisscoring: DEBUG
+    org.springframework: INFO
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+  pattern:
+    console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx"
+
+# OpenAPI/Swagger for development
+springdoc:
+  swagger-ui:
+    enabled: true
+    try-it-out-enabled: true
+    display-request-duration: true
+    show-extensions: true
+    show-common-extensions: true
+    doc-expansion: none
+    default-models-expand-depth: 1
+    default-model-expand-depth: 1
+
+# Development specific configuration
+tennis-scoring:
+  match:
+    max-matches: 100
+    cleanup-after-days: 7
+  
+  api:
+    cors-enabled: true
+    cors-origins: "http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000"
+    rate-limit: 1000  # Higher limit for development
+
+# Management endpoints for development
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

@@ -130,6 +130,21 @@ public class MatchDomainService implements MatchManagementPort, QueryPort {
         eventPublisher.publishMatchDeleted(matchId, "system");
     }
     
+    /**
+     * Update an existing match.
+     * 更新現有比賽
+     * 
+     * @param match the match to update
+     * @return the updated match
+     */
+    public Match updateMatch(Match match) {
+        Objects.requireNonNull(match, "Match cannot be null");
+        validationService.validateMatchId(match.getMatchId());
+        
+        // Save updated match
+        return matchRepository.save(match);
+    }
+    
     // QueryPort implementation
     
     @Override

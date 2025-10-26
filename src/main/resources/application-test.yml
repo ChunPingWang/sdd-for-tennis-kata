@@ -1,0 +1,50 @@
+# Test Environment Configuration
+# 測試環境配置
+
+server:
+  port: 0  # Random port for testing
+
+spring:
+  # Test specific configuration
+  jackson:
+    serialization:
+      indent-output: false
+    deserialization:
+      fail-on-unknown-properties: true
+
+# Test logging - minimal output
+logging:
+  level:
+    root: WARN
+    com.tennisscoring: INFO
+    org.springframework: WARN
+    org.springframework.test: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Disable Swagger for tests
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+# Test specific configuration
+tennis-scoring:
+  match:
+    max-matches: 10
+    cleanup-after-days: 1
+  
+  api:
+    cors-enabled: false
+    rate-limit: 10000  # No rate limiting in tests
+
+# Disable management endpoints for tests
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never

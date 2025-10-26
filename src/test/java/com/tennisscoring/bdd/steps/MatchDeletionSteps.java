@@ -108,14 +108,18 @@ public class MatchDeletionSteps {
                   "應該拋出 MatchNotFoundException 或 InvalidMatchIdException");
     }
     
-    @而且("應該顯示錯誤訊息 {string}")
-    public void 應該顯示錯誤訊息(String expectedMessage) {
+    @而且("應該顯示刪除錯誤訊息 {string}")
+    public void 應該顯示刪除錯誤訊息(String expectedMessage) {
         assertNotNull(lastException, "應該有異常發生");
         String actualMessage = lastException.getMessage();
         assertTrue(actualMessage.contains(expectedMessage) || 
                   expectedMessage.equals("比賽不存在") && (lastException instanceof MatchNotFoundException) ||
                   expectedMessage.equals("比賽ID不能為空") && (lastException instanceof InvalidMatchIdException),
                   "錯誤訊息應該包含: " + expectedMessage + ", 實際訊息: " + actualMessage);
+    }
+    
+    public Exception getLastException() {
+        return lastException;
     }
     
     @當("我嘗試刪除ID為空字串的比賽")
@@ -157,21 +161,7 @@ public class MatchDeletionSteps {
         }, "系統中不應該再有這場比賽的記錄");
     }
     
-    @而且("比賽已經完成，獲勝者是 {string}")
-    public void 比賽已經完成獲勝者是(String winnerName) {
-        assertNotNull(recordedMatchId, "應該有記錄的比賽ID");
-        Match match = matchDomainService.getMatch(recordedMatchId);
-        
-        // Simulate match completion - this would normally happen through scoring
-        // 模擬比賽完成 - 這通常通過計分來實現
-        // For BDD testing, we'll assume the match can be set to completed state
-        // 對於 BDD 測試，我們假設比賽可以設置為完成狀態
-        assertEquals(MatchStatus.COMPLETED, match.getStatus(), "比賽應該已完成");
-        
-        if (match.getWinnerPlayer() != null) {
-            assertEquals(winnerName, match.getWinnerPlayer().getName(), "獲勝者應該是 " + winnerName);
-        }
-    }
+
     
     @假設("我創建了 {int} 場比賽")
     public void 我創建了場比賽(int matchCount) {

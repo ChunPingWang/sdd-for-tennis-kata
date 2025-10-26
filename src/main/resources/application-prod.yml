@@ -1,0 +1,65 @@
+# Production Environment Configuration
+# 生產環境配置
+
+server:
+  port: 8080
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false
+
+spring:
+  # Production Jackson configuration
+  jackson:
+    serialization:
+      indent-output: false
+    deserialization:
+      fail-on-unknown-properties: true
+
+# Production logging
+logging:
+  level:
+    root: WARN
+    com.tennisscoring: INFO
+    org.springframework: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /var/log/tennis-scoring-system/application.log
+    max-size: 50MB
+    max-history: 90
+
+# Production OpenAPI/Swagger configuration
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    try-it-out-enabled: false
+    display-request-duration: false
+    show-extensions: false
+    show-common-extensions: false
+
+# Production specific configuration
+tennis-scoring:
+  match:
+    max-matches: 10000
+    cleanup-after-days: 90
+  
+  api:
+    cors-enabled: true
+    cors-origins: "https://tennisscoring.com,https://www.tennisscoring.com"
+    rate-limit: 60  # Stricter rate limiting for production
+
+# Production management endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: never

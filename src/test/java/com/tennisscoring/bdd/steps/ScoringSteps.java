@@ -132,7 +132,7 @@ public class ScoringSteps {
                     "球員2的分數應該是 " + expectedScore);
     }
     
-    @假設("{string} 得到 {int} 分")
+    @假設("{string} 已經得到 {int} 分")
     public void 假設球員得到分(String playerName, int points) {
         球員得到分(playerName, points);
     }
@@ -156,14 +156,18 @@ public class ScoringSteps {
                   "應該拋出 InvalidPlayerException 或 IllegalArgumentException");
     }
     
-    @而且("應該顯示錯誤訊息 {string}")
-    public void 應該顯示錯誤訊息(String expectedMessage) {
+    @而且("應該顯示計分錯誤訊息 {string}")
+    public void 應該顯示計分錯誤訊息(String expectedMessage) {
         assertNotNull(lastException, "應該有異常發生");
         String actualMessage = lastException.getMessage();
         assertTrue(actualMessage.contains("球員") || actualMessage.contains("player") ||
                   expectedMessage.equals("球員不存在於此比賽中") && (lastException instanceof InvalidPlayerException) ||
                   expectedMessage.equals("比賽已結束，無法繼續得分") && (lastException instanceof MatchCompletedException),
                   "錯誤訊息應該相關: " + expectedMessage + ", 實際訊息: " + actualMessage);
+    }
+    
+    public Exception getLastException() {
+        return lastException;
     }
     
     @假設("比賽已經完成，獲勝者是 {string}")

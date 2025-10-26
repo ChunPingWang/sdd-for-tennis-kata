@@ -146,8 +146,7 @@ public class MatchController {
             @PathVariable String matchId,
             @Valid @RequestBody ScorePointRequest request) {
         
-        boolean matchCompleted = matchDomainService.scorePoint(matchId, request.getPlayerId());
-        Match match = matchDomainService.getMatch(matchId);
+        Match match = matchDomainService.scorePoint(matchId, request.getPlayerId());
         MatchResponse response = matchMapper.toResponse(match);
         
         return ResponseEntity.ok(response);

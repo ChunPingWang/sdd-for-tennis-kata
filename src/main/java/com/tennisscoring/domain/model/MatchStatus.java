@@ -4,9 +4,9 @@ package com.tennisscoring.domain.model;
  * Enumeration representing the status of a tennis match.
  */
 public enum MatchStatus {
-    IN_PROGRESS("進行中"),
-    COMPLETED("已完成"),
-    CANCELLED("已取消");
+    IN_PROGRESS("IN_PROGRESS"),
+    COMPLETED("COMPLETED"),
+    CANCELLED("CANCELLED");
     
     private final String displayName;
     
